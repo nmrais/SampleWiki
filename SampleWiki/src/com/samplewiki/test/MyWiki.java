@@ -4,13 +4,14 @@ import java.io.IOException;
 import java.util.Scanner;
 
 import org.apache.commons.lang.StringUtils;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 /**
- * This class is a test application class for Wiki communication
+ * This class is a test application class for Wiki communication using JSoup
  * 
  * @author Rais Nazim
  * 
@@ -22,7 +23,23 @@ public class MyWiki {
 	 */
 	private static Scanner scanner;
 	/**
-	 * The Wiki URL
+	 * The constant to point to <p> tag
+	 */
+	private static final String P = "p";
+	/**
+	 * The constant variable for SPACE character
+	 */
+	private static final String SPACE = " ";
+	/**
+	 * The constant variable to Under Score character
+	 */
+	private static final String UNDER_SCORE = "_";
+	/**
+	 * The constant variable for No results found.
+	 */
+	private static final String NO_RESULTS_FOUND = "No results found.";
+	/**
+	 * The Wiki base URL
 	 */
 	private static final String WIKI_URL = "https://en.wikipedia.org/wiki/";
 
@@ -69,14 +86,22 @@ public class MyWiki {
 	 * @throws IOException
 	 */
 	private static String queryWikiAndExtractResponse(String query) throws IOException {
-		// JSoup invokes the Wiki URL with the query string and gets the
-		// response
-		Document doc = Jsoup.connect(WIKI_URL + query).get();
-		Elements paragraphs = doc.select("p");
-		Element firstParagraph = paragraphs.first();
-		String contentFirstParagraph = firstParagraph.text();
-		contentFirstParagraph = contentFirstParagraph.replaceAll("\\. ", "\\. \n");
-		return contentFirstParagraph;
+		try {
+			// JSoup invokes the Wiki URL with the query string and gets the response
+			Document doc = Jsoup.connect(WIKI_URL + query).get();
+			// JSoup Document API method returns the list of all HTML <p> tags
+			Elements paragraphs = doc.select(P);
+			// JSoup Elements API method which returns the first element
+			Element firstParagraph = paragraphs.first();
+			// JSoup Element API method which returns the text content of the element
+			String contentFirstParagraph = firstParagraph.text();
+			// Inserting line space after every period.
+			contentFirstParagraph = contentFirstParagraph.replaceAll("\\. ", "\\. \n");
+			return contentFirstParagraph;
+		} catch (HttpStatusException he) {
+			// If no records found, JSoup Connect method throws exception HttpStatusException
+			return NO_RESULTS_FOUND;
+		}
 	}
 
 	/**
@@ -88,8 +113,10 @@ public class MyWiki {
 	private static String acceptQueryAndCreateWikiSearchParam() {
 		String query;
 		System.out.print("Enter the query string : ");
+		// Accepts the query from the command line
 		query = scanner.nextLine();
-		query = query.trim().replace(" ", "_");
+		// Code replaces the <SPACE> with under score
+		query = query.trim().replace(SPACE, UNDER_SCORE);
 		return query;
 	}
 }
